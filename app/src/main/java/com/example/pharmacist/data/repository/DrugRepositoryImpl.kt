@@ -7,10 +7,12 @@ import com.example.pharmacist.domain.model.Drug
 import com.example.pharmacist.domain.repository.DrugRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.filter.TextSearchType
 import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale.filter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,17 +46,26 @@ class DrugRepositoryImpl @Inject constructor(
                 return@withContext getDrugs()
             }
 
-            val trimmedQuery = query.trim()
+            val trimmedQuery  = query.trim()
+//            val partialQuery :String = "%trimmedQuery%"
+            //simple select all
+            // val response = client.postgrest["drugs"]
+            //     .select()
+            
+            //select drug_name
+            // val response = client.postgrest["drugs"]
+            //     .select(columns = "drug_name")
+
+            //select drug_name and drug_code
             val response = client.postgrest["drugs"]
-                .select {
+                .select(columns = Columns.list("drug_name","ingredient"))
+            {
                     filter {
-                        eq("drug_name", trimmedQuery)
+                        // condition eq
+                        //   eq("drug_name", trimmedQuery)
+                        //textSearch
+                        textSearch(column = "ingredient", query = trimmedQuery, textSearchType = TextSearchType.NONE)
                     }
-//                    textSearch(
-//                        column = "drug_name",
-//                        query = trimmedQuery,
-//                        type = TextSearchType.PLAIN
-//                    )
                 }
 
             response.decodeList<DrugDto>().also { drugs ->

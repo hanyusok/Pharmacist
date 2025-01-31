@@ -23,17 +23,25 @@ fun DrugListScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
             query = searchQuery,
             onQueryChange = { newQuery -> 
                 searchQuery = newQuery
-                onSearch(searchQuery)
+                if (newQuery.length >= 2) {
+                    onSearch(newQuery)
+                } else if (newQuery.isEmpty()) {
+                    onSearch("")
+                }
             },
-            onSearch = { onSearch(searchQuery) },
-            active = false,
-            onActiveChange = {},
+            onSearch = { 
+                onSearch(searchQuery)
+                isSearchActive = false
+            },
+            active = isSearchActive,
+            onActiveChange = { isSearchActive = it },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
             placeholder = { Text("Search drugs...") },
             modifier = Modifier
@@ -47,6 +55,17 @@ fun DrugListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
+            }
+        } else if (drugs.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No drugs found",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else {
             LazyColumn(
