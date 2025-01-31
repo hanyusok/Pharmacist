@@ -15,6 +15,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.Modifier
 import com.example.pharmacist.ui.screens.DrugListScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.pharmacist.navigation.NavGraph
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -23,19 +25,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PharmacistTheme {
-                val viewModel: DrugViewModel = hiltViewModel()
-                val drugs by viewModel.drugs.collectAsState()
-                val isLoading by viewModel.isLoading.collectAsState()
-
+                val navController = rememberNavController()
+                
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DrugListScreen(
-                        drugs = drugs,
-                        isLoading = isLoading,
-                        onSearch = viewModel::searchDrugs
-                    )
+                    NavGraph(navController = navController)
                 }
             }
         }

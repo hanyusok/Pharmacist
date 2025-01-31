@@ -68,6 +68,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.material3.android)
     kapt(libs.hilt.compiler)
 
     // Kotlin Serialization
@@ -84,5 +85,22 @@ dependencies {
 
     // Material Icons Extended
     implementation(libs.androidx.compose.material.icons.extended)
+
+    // Remove duplicate Material3 dependencies
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    implementation("androidx.compose.material3:material3")
+    
+    // Remove any other direct Material3 dependencies like:
+    // implementation("androidx.compose.material3:material3:1.1.2")
+    // implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
+    
+    // Other dependencies remain unchanged
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
 }
 

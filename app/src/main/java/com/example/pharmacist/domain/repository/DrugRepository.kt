@@ -5,4 +5,5 @@ import com.example.pharmacist.domain.model.Drug
 interface DrugRepository {
     suspend fun getDrugs(): List<Drug>
     suspend fun searchDrugs(query: String): List<Drug>
+    suspend fun getDrugById(id: Long): Drug?
 } 
