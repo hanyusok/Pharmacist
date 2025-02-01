@@ -1,15 +1,24 @@
 package com.example.pharmacist.ui.screens
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.domain.model.Drug
@@ -95,41 +105,133 @@ private fun DrugDetailContent(drug: Drug) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Drug Name Section
         Text(
             text = drug.drugName,
             style = MaterialTheme.typography.headlineMedium,
-            color = colorScheme.primary
+            color = colorScheme.primary,
+            fontWeight = FontWeight.Bold
         )
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
-        Text(
-            text = "Ingredient: ${drug.ingredient}",
-            style = MaterialTheme.typography.bodyLarge
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Drug Code: ${drug.drugCode}",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Manufacturer: ${drug.manufacturer}",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        if (drug.isCoveredByInsurance) {
-            Text(
-                text = "✓ Covered by Insurance",
-                color = colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
+        // Main Info Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = colorScheme.surfaceVariant
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 2.dp
             )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                InfoRow(
+                    label = "Ingredient",
+                    value = drug.ingredient,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                InfoRow(
+                    label = "Drug Code",
+                    value = drug.drugCode
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                InfoRow(
+                    label = "Manufacturer",
+                    value = drug.manufacturer
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Insurance Coverage",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        if (drug.isCoveredByInsurance) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Covered",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = "Not Covered",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = style,
+            color = colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
+        Text(
+            text = value,
+            style = style,
+            color = colorScheme.onSurfaceVariant
+        )
     }
 } 

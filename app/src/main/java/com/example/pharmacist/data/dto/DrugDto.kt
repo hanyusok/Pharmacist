@@ -19,5 +19,5 @@ data class DrugDto(
     @SerialName("manufacturer")
     val manufacturer: String = "",
     @SerialName("covered_by_insurance")
-    val covered_by_insurance: String = ""
+    val covered_by_insurance: Boolean = false
 )

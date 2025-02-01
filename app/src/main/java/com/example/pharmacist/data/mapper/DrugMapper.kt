@@ -11,6 +11,6 @@ fun DrugDto.toDrug(): Drug {
         drugCode = drug_code,
         drugName = drug_name,
         manufacturer = manufacturer,
-        isCoveredByInsurance = covered_by_insurance == "Y"
+        isCoveredByInsurance = covered_by_insurance
     )
 } 
