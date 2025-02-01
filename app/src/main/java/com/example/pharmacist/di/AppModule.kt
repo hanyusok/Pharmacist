@@ -1,7 +1,7 @@
 package com.example.pharmacist.di
 
 import io.github.jan.supabase.SupabaseClient as Remote
-import com.example.pharmacist.data.SupabaseClient as LocalSupabase
+import com.example.pharmacist.data.SupabaseClient as Local
 import com.example.pharmacist.data.repository.DrugRepositoryImpl
 import com.example.pharmacist.domain.repository.DrugRepository
 import dagger.Binds
@@ -20,7 +20,7 @@ abstract class AppModule {
         @Provides
         @Singleton
         fun provideSupabaseClient(): Remote {
-            return LocalSupabase.client
+            return Local.client
         }
     }
 

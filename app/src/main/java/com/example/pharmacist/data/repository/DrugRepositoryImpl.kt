@@ -1,6 +1,7 @@
 package com.example.pharmacist.data.repository
 
-import android.service.autofill.Validators.or
+
+//import com.example.pharmacist.data.SupabaseClient
 import android.util.Log
 import com.example.pharmacist.data.dto.DrugDto
 import com.example.pharmacist.data.mapper.toDrug
@@ -9,8 +10,6 @@ import com.example.pharmacist.domain.repository.DrugRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
-//import io.github.jan.supabase.postgrest.query.filter.FilterOperator
-//import io.github.jan.supabase.postgrest.query.filter.PostgrestFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -27,12 +26,40 @@ class DrugRepositoryImpl @Inject constructor(
 
     override suspend fun getDrugs(): List<Drug> = withContext(Dispatchers.IO) {
         try {
-            val response = client.postgrest["drugs"].select()
-            response.decodeList<DrugDto>().also { 
-                Log.d("DrugRepositoryImpl", "Fetched ${it.size} drugs")
-            }.map { it.toDrug() }
+            Log.d("DrugRepositoryImpl", "Starting getDrugs() request")
+            
+            val response = client.postgrest["drugs"]
+                .select(columns = Columns.list(
+                    "id",
+                    "main_code",
+                    "ingredient",
+                    "drug_code",
+                    "drug_name",
+                    "manufacturer",
+                    "covered_by_insurance"
+                )) {
+                    limit(100)
+                }
+            
+            Log.d("DrugRepositoryImpl", "Raw response received")
+            
+            val drugDtos = response.decodeList<DrugDto>()
+            Log.d("DrugRepositoryImpl", "Decoded ${drugDtos.size} DrugDtos")
+            
+            // Log first item for debugging
+            if (drugDtos.isNotEmpty()) {
+                Log.d("DrugRepositoryImpl", "First drug: ${drugDtos.first()}")
+            }
+            
+            drugDtos.map { it.toDrug() }.also { drugs ->
+                Log.d("DrugRepositoryImpl", "Successfully mapped ${drugs.size} drugs")
+                if (drugs.isNotEmpty()) {
+                    Log.d("DrugRepositoryImpl", "First mapped drug: ${drugs.first()}")
+                }
+            }
         } catch (e: Exception) {
-            Log.e("DrugRepositoryImpl", "Error fetching drugs", e)
+            Log.e("DrugRepositoryImpl", "Error in getDrugs()", e)
+            Log.e("DrugRepositoryImpl", "Stack trace: ${e.stackTraceToString()}")
             emptyList()
         }
     }
@@ -47,15 +74,22 @@ class DrugRepositoryImpl @Inject constructor(
             }
 
             val trimmedQuery = query.trim()
-            val response = client.postgrest.from("drugs")
-                .select(columns = Columns.list("drug_name")) {
+            val response = client.postgrest["drugs"]
+                .select(columns = Columns.list(
+                    "id",
+                    "main_code",
+                    "ingredient",
+                    "drug_code",
+                    "drug_name",
+                    "manufacturer",
+                    "covered_by_insurance"
+                )) {
                     filter {
-                        Drug::drugName ilike "%$trimmedQuery%"
-//                        ilike("drug_name", "%$trimmedQuery%")
-//                        ilike("ingredient", "%$trimmedQuery%")
-//                        ilike("drug_code", "%$trimmedQuery%")
+                        ilike("drug_name", "%$trimmedQuery%")
                     }
+                    limit(50)
                 }
+                
 
             response.decodeList<DrugDto>().also { drugs ->
                 Log.d("DrugRepositoryImpl", 
@@ -72,21 +106,27 @@ class DrugRepositoryImpl @Inject constructor(
         try {
             Log.d("DrugRepositoryImpl", "Fetching drug with id: $id")
             
-            val response = client.postgrest.from("drugs")
-                .select(columns = Columns.list("id")) {
+            val response = client.postgrest["drugs"]
+                .select(columns = Columns.list(
+                    "id",
+                    "main_code",
+                    "ingredient",
+                    "drug_code",
+                    "drug_name",
+                    "manufacturer",
+                    "covered_by_insurance"
+                )) {
                     filter {
-                        eq("id", "$id")
-                        Log.d("DrugRepositoryImpl", "Filter condition: $id")
+                        eq("id", id.toString())
                     }
                 }
-
-            // drug fetching object transfer error !!!! //
-            response.decodeSingleOrNull<DrugDto>()?.let { dto ->
-                Log.d("DrugRepositoryImpl", "Found drug: ${dto.drug_name}")
-                dto.toDrug()
-            }.also { drug ->
-                Log.d("DrugRepositoryImpl", "Mapped to domain model: ${drug?.drugName}")
-            }
+                .decodeSingleOrNull<DrugDto>()
+                ?.let { dto ->
+                    Log.d("DrugRepositoryImpl", "Found drug: ${dto.drug_name}")
+                    dto.toDrug()
+                }
+            
+            response
         } catch (e: Exception) {
             Log.e("DrugRepositoryImpl", "Error fetching drug with id: $id", e)
             null

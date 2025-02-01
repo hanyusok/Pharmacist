@@ -13,15 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,41 +49,58 @@ fun DrugListScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
-            query = searchQuery,
-            onQueryChange = { newQuery -> 
-                searchQuery = newQuery
-                if (newQuery.length >= 2) {
-                    onSearch(newQuery)
-                } else if (newQuery.isEmpty()) {
-                    onSearch("")
-                }
-            },
-            onSearch = { 
-                onSearch(searchQuery)
-                isSearchActive = false
-            },
-            active = isSearchActive,
-            onActiveChange = { isSearchActive = it },
-            leadingIcon = { 
-                Icon(
-                    imageVector = Icons.Default.Search, 
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            placeholder = { 
-                Text(
-                    text = "Search drugs...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
+            expanded = isSearchActive,
+            onExpandedChange = { isSearchActive = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+                .padding(16.dp),
+            shape = SearchBarDefaults.inputFieldShape,
+            content = {},
+            inputField = {},
+            colors = SearchBarDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                dividerColor = MaterialTheme.colorScheme.onSurfaceVariant),
+            tonalElevation = 5.dp,
+
+            windowInsets = SearchBarDefaults.windowInsets,
+            shadowElevation = 5.dp,)
+
+
+
+//        SearchBar(
+//            isExpanded = isSearchActive,
+//            query = searchQuery,
+//            onQueryChange = { newQuery ->
+//                searchQuery = newQuery
+//                if (newQuery.length >= 2) {
+//                    onSearch(newQuery)
+//                } else if (newQuery.isEmpty()) {
+//                    onSearch("")
+//                }
+//            },
+//            onSearch = {
+//                onSearch(searchQuery)
+//                isSearchActive = false
+//            },
+//            active = isSearchActive,
+//            onActiveChange = { isSearchActive = it },
+//            leadingIcon = {
+//                Icon(
+//                    imageVector = Icons.Default.Search,
+//                    contentDescription = null,
+//                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
+//            },
+//            placeholder = {
+//                Text(
+//                    text = "Search drugs...",
+//                    style = MaterialTheme.typography.bodyLarge,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
+//            },
+//        ) {}
             // Search suggestions can be added here if needed
-        }
+
 
         if (isLoading) {
             Box(

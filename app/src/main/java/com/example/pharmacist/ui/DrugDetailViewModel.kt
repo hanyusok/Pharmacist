@@ -3,6 +3,7 @@ package com.example.pharmacist.ui
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.pharmacist.data.repository.DrugRepositoryImpl
 import com.example.pharmacist.domain.model.Drug
 import com.example.pharmacist.domain.repository.DrugRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DrugDetailViewModel @Inject constructor(
-    private val repository: DrugRepository,
+    private val repository: DrugRepositoryImpl,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 

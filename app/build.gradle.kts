@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "com.example.pharmacist"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.pharmacist"
