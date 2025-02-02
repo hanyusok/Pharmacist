@@ -204,4 +204,22 @@ class DrugRepositoryImpl @Inject constructor(
             throw IllegalStateException("Failed to create drug: ${e.message}", e)
         }
     }
+
+    override suspend fun deleteDrug(drugId: String): Unit = withContext(Dispatchers.IO) {
+        try {
+            Log.d("DrugRepositoryImpl", "Starting delete operation for drug: $drugId")
+            
+            client.postgrest["drugs"]
+                .delete {
+                    filter {
+                        eq("id", drugId)
+                    }
+                }
+            
+            Log.d("DrugRepositoryImpl", "Drug deleted successfully")
+        } catch (e: Exception) {
+            Log.e("DrugRepositoryImpl", "Delete failed with error", e)
+            throw IllegalStateException("Failed to delete drug: ${e.message}", e)
+        }
+    }
 } 

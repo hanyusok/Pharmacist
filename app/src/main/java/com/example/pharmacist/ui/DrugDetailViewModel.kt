@@ -33,6 +33,9 @@ class DrugDetailViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _isDeleting = MutableStateFlow(false)
+    val isDeleting: StateFlow<Boolean> = _isDeleting.asStateFlow()
+
     init {
         viewModelScope.launch {
             // Observe shouldRefresh changes
@@ -61,6 +64,27 @@ class DrugDetailViewModel @Inject constructor(
                 _error.value = e.message
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun deleteDrug(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                _isDeleting.value = true
+                _error.value = null
+                
+                Log.d("DrugDetailViewModel", "Attempting to delete drug: $drugId")
+                repository.deleteDrug(drugId)
+                
+                Log.d("DrugDetailViewModel", "Drug deleted successfully")
+                onSuccess()
+                
+            } catch (e: Exception) {
+                Log.e("DrugDetailViewModel", "Error deleting drug", e)
+                _error.value = "Failed to delete drug: ${e.message}"
+            } finally {
+                _isDeleting.value = false
             }
         }
     }

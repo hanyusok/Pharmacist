@@ -64,10 +64,15 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val drugId = checkNotNull(backStackEntry.arguments?.getString("drugId"))
-            val drugDetailViewModel: DrugDetailViewModel = hiltViewModel()
+            val drugListViewModel: DrugViewModel = hiltViewModel(
+                remember { navController.getBackStackEntry(Screen.DrugList.route) }
+            )
             DrugDetailScreen(
-                viewModel = drugDetailViewModel,
-                onNavigateBack = { navController.navigateUp() },
+                viewModel = hiltViewModel(),
+                onNavigateBack = {
+                    drugListViewModel.loadDrugs(forceRefresh = true)
+                    navController.navigateUp()
+                },
                 onNavigateToEdit = { id -> 
                     navController.navigate(Screen.DrugEdit.createRoute(id))
                 }

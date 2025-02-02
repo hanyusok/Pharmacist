@@ -8,4 +8,5 @@ interface DrugRepository {
     suspend fun getDrugById(id: String): Drug?
     suspend fun updateDrug(drug: Drug): Drug
     suspend fun createDrug(drug: Drug): Drug
+    suspend fun deleteDrug(drugId: String): Unit
 } 
