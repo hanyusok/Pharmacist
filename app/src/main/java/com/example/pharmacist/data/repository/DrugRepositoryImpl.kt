@@ -185,4 +185,23 @@ class DrugRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    override suspend fun createDrug(drug: Drug): Drug = withContext(Dispatchers.IO) {
+        try {
+            Log.d("DrugRepositoryImpl", "Starting create operation")
+            Log.d("DrugRepositoryImpl", "Create payload: $drug")
+            
+            val drugDto = drug.toDto()
+            
+            client.postgrest["drugs"]
+                .insert(drugDto)
+
+            Log.d("DrugRepositoryImpl", "Drug created successfully")
+            return@withContext drug
+
+        } catch (e: Exception) {
+            Log.e("DrugRepositoryImpl", "Create failed with error", e)
+            throw IllegalStateException("Failed to create drug: ${e.message}", e)
+        }
+    }
 } 

@@ -16,6 +16,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.ui.DrugViewModel
 import com.example.pharmacist.ui.screens.DrugEditScreen
 import com.example.pharmacist.ui.DrugDetailViewModel
+import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
 
 
 sealed class Screen(val route: String) {
@@ -24,8 +26,9 @@ sealed class Screen(val route: String) {
         fun createRoute(drugId: String) = "drug_detail/$drugId"
     }
     object DrugEdit : Screen("drug_edit/{drugId}") {
-        fun createRoute(drugId: String) = "drug_edit/$drugId"
+        fun createRoute(drugId: String?) = "drug_edit/$drugId"
     }
+    object AddDrug : Screen("add_drug")
 }
 
 @Composable
@@ -47,6 +50,9 @@ fun NavGraph(
                 onSearch = viewModel::searchDrugs,
                 onDrugClick = { drugId ->
                     navController.navigate(Screen.DrugDetail.createRoute(drugId))
+                },
+                onAddNewDrug = {
+                    navController.navigate(Screen.AddDrug.route)
                 }
             )
         }
@@ -56,15 +62,14 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("drugId") { type = NavType.StringType }
             )
-        ) { _ ->
-            val drugDetailViewModel: DrugDetailViewModel = hiltViewModel(
-                remember { navController.getBackStackEntry(Screen.DrugDetail.route) }
-            )
+        ) { backStackEntry ->
+            val drugId = checkNotNull(backStackEntry.arguments?.getString("drugId"))
+            val drugDetailViewModel: DrugDetailViewModel = hiltViewModel()
             DrugDetailScreen(
                 viewModel = drugDetailViewModel,
                 onNavigateBack = { navController.navigateUp() },
-                onNavigateToEdit = { drugId ->
-                    navController.navigate(Screen.DrugEdit.createRoute(drugId))
+                onNavigateToEdit = { id -> 
+                    navController.navigate(Screen.DrugEdit.createRoute(id))
                 }
             )
         }
@@ -85,12 +90,26 @@ fun NavGraph(
             val drugDetailViewModel: DrugDetailViewModel = hiltViewModel(
                 remember { navController.getBackStackEntry(Screen.DrugDetail.route) }
             )
+            
             DrugEditScreen(
                 drugId = drugId,
                 onNavigateBack = { navController.navigateUp() },
                 onUpdateComplete = {
                     drugListViewModel.loadDrugs(forceRefresh = true)
                     drugDetailViewModel.refresh()
+                }
+            )
+        }
+
+        composable(Screen.AddDrug.route) {
+            val drugListViewModel: DrugViewModel = hiltViewModel(
+                remember { navController.getBackStackEntry(Screen.DrugList.route) }
+            )
+            DrugEditScreen(
+                drugId = null,
+                onNavigateBack = { navController.navigateUp() },
+                onUpdateComplete = {
+                    drugListViewModel.loadDrugs(forceRefresh = true)
                 }
             )
         }

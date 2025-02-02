@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pharmacist.data.repository.DrugRepositoryImpl
 import com.example.pharmacist.domain.model.Drug
-import com.example.pharmacist.domain.repository.DrugRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

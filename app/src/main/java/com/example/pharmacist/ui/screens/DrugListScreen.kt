@@ -18,11 +18,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +42,7 @@ import com.example.pharmacist.R
 import com.example.pharmacist.domain.model.Drug
 import com.example.pharmacist.ui.theme.PharmacistTheme
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -54,7 +57,7 @@ fun DrugListScreen(
     isLoading: Boolean,
     onSearch: (String) -> Unit,
     onDrugClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onAddNewDrug: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
@@ -62,164 +65,179 @@ fun DrugListScreen(
     // Keep track of recent searches
     var recentSearches by remember { mutableStateOf(listOf<String>()) }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        DockedSearchBar(
-            query = searchQuery,
-            onQueryChange = { newQuery ->
-                searchQuery = newQuery
-                if (newQuery.length >= 2) {
-                    onSearch(newQuery)
-                } else if (newQuery.isEmpty()) {
-                    onSearch("")
-                }
-            },
-            onSearch = { query ->
-                onSearch(query)
-                isSearchActive = false
-                if (query.isNotEmpty() && !recentSearches.contains(query)) {
-                    recentSearches = (listOf(query) + recentSearches).take(5)
-                }
-            },
-            active = isSearchActive,
-            onActiveChange = { isSearchActive = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            placeholder = {
-                Text(
-                    text = "Search drugs...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            leadingIcon = {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddNewDrug,
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
                 Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add new drug",
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
-            },
-            trailingIcon = {
-                if (isSearchActive) {
-                    // Show close/back button when search is active
-                    IconButton(
-                        onClick = { 
-                            if (searchQuery.isNotEmpty()) {
-                                searchQuery = ""
-                            } else {
-                                isSearchActive = false
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (searchQuery.isNotEmpty()) 
-                                Icons.Default.Clear 
-                            else 
-                                Icons.Default.ArrowBack,
-                            contentDescription = if (searchQuery.isNotEmpty()) 
-                                "Clear search" 
-                            else 
-                                "Close search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
-        ) {
-            // This content is shown when the search bar is active
-            Column(
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize()) {
+            DockedSearchBar(
+                query = searchQuery,
+                onQueryChange = { newQuery ->
+                    searchQuery = newQuery
+                    if (newQuery.length >= 2) {
+                        onSearch(newQuery)
+                    } else if (newQuery.isEmpty()) {
+                        onSearch("")
+                    }
+                },
+                onSearch = { query ->
+                    onSearch(query)
+                    isSearchActive = false
+                    if (query.isNotEmpty() && !recentSearches.contains(query)) {
+                        recentSearches = (listOf(query) + recentSearches).take(5)
+                    }
+                },
+                active = isSearchActive,
+                onActiveChange = { isSearchActive = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                // Show recent searches with clear all option
-                if (searchQuery.isEmpty()) {
-                    if (recentSearches.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    .padding(16.dp),
+                placeholder = {
+                    Text(
+                        text = "Search drugs...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                trailingIcon = {
+                    if (isSearchActive) {
+                        // Show close/back button when search is active
+                        IconButton(
+                            onClick = { 
+                                if (searchQuery.isNotEmpty()) {
+                                    searchQuery = ""
+                                } else {
+                                    isSearchActive = false
+                                }
+                            }
                         ) {
-                            Text(
-                                "Recent Searches",
-                                style = MaterialTheme.typography.labelMedium
+                            Icon(
+                                imageVector = if (searchQuery.isNotEmpty()) 
+                                    Icons.Default.Clear 
+                                else 
+                                    Icons.Default.ArrowBack,
+                                contentDescription = if (searchQuery.isNotEmpty()) 
+                                    "Clear search" 
+                                else 
+                                    "Close search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            TextButton(
-                                onClick = { recentSearches = emptyList() }
+                        }
+                    }
+                }
+            ) {
+                // This content is shown when the search bar is active
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    // Show recent searches with clear all option
+                    if (searchQuery.isEmpty()) {
+                        if (recentSearches.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Clear All")
+                                Text(
+                                    "Recent Searches",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                TextButton(
+                                    onClick = { recentSearches = emptyList() }
+                                ) {
+                                    Text("Clear All")
+                                }
+                            }
+                            
+                            recentSearches.forEach { recent ->
+                                SearchSuggestionItem(
+                                    text = recent,
+                                    onItemClick = {
+                                        searchQuery = recent
+                                        onSearch(recent)
+                                        isSearchActive = false
+                                    },
+                                    onRemove = {
+                                        recentSearches = recentSearches.filter { it != recent }
+                                    }
+                                )
                             }
                         }
+                    }
+                    
+                    // Show search results/suggestions based on current query
+                    if (searchQuery.isNotEmpty()) {
+                        // Filter drugs that match the query
+                        val suggestions = drugs.filter { 
+                            it.drugName.contains(searchQuery, ignoreCase = true) ||
+                            it.ingredient.contains(searchQuery, ignoreCase = true)
+                        }.take(5)  // Limit to 5 suggestions
                         
-                        recentSearches.forEach { recent ->
+                        suggestions.forEach { drug ->
                             SearchSuggestionItem(
-                                text = recent,
+                                text = drug.drugName,
+                                secondaryText = drug.ingredient,
                                 onItemClick = {
-                                    searchQuery = recent
-                                    onSearch(recent)
+                                    drug.id?.let { onDrugClick(it) }
                                     isSearchActive = false
-                                },
-                                onRemove = {
-                                    recentSearches = recentSearches.filter { it != recent }
                                 }
                             )
                         }
                     }
                 }
-                
-                // Show search results/suggestions based on current query
-                if (searchQuery.isNotEmpty()) {
-                    // Filter drugs that match the query
-                    val suggestions = drugs.filter { 
-                        it.drugName.contains(searchQuery, ignoreCase = true) ||
-                        it.ingredient.contains(searchQuery, ignoreCase = true)
-                    }.take(5)  // Limit to 5 suggestions
-                    
-                    suggestions.forEach { drug ->
-                        SearchSuggestionItem(
-                            text = drug.drugName,
-                            secondaryText = drug.ingredient,
-                            onItemClick = {
-                                drug.id?.let { onDrugClick(it) }
-                                isSearchActive = false
-                            }
+            }
+
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (drugs.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No drugs found",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(drugs) { drug ->
+                        DrugCard(
+                            drug = drug,
+                            onClick = { drug.id?.let { onDrugClick(it) } }
                         )
                     }
-                }
-            }
-        }
-
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (drugs.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No drugs found",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(drugs) { drug ->
-                    DrugCard(
-                        drug = drug,
-                        onClick = { drug.id?.let { onDrugClick(it) } }
-                    )
                 }
             }
         }
@@ -382,7 +400,8 @@ fun DrugListScreenPreview() {
                 ),
                 isLoading = false,
                 onSearch = {},
-                onDrugClick = {}
+                onDrugClick = {},
+                onAddNewDrug = {}
             )
         }
     }

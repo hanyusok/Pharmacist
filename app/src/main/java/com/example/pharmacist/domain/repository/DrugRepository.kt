@@ -7,4 +7,5 @@ interface DrugRepository {
     suspend fun searchDrugs(query: String): List<Drug>
     suspend fun getDrugById(id: String): Drug?
     suspend fun updateDrug(drug: Drug): Drug
+    suspend fun createDrug(drug: Drug): Drug
 } 
