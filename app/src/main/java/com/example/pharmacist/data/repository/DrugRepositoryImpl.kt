@@ -5,6 +5,7 @@ package com.example.pharmacist.data.repository
 import android.util.Log
 import com.example.pharmacist.data.dto.DrugDto
 import com.example.pharmacist.data.mapper.toDrug
+import com.example.pharmacist.data.mapper.toDto
 import com.example.pharmacist.domain.model.Drug
 import com.example.pharmacist.domain.repository.DrugRepository
 import io.github.jan.supabase.SupabaseClient
@@ -102,7 +103,7 @@ class DrugRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDrugById(id: Long): Drug? = withContext(Dispatchers.IO) {
+    override suspend fun getDrugById(id: String): Drug? = withContext(Dispatchers.IO) {
         try {
             Log.d("DrugRepositoryImpl", "Fetching drug with id: $id")
             
@@ -117,19 +118,65 @@ class DrugRepositoryImpl @Inject constructor(
                     "covered_by_insurance"
                 )) {
                     filter {
-                        eq("id", id.toString())
+                        eq("id", id)
                     }
                 }
                 .decodeSingleOrNull<DrugDto>()
                 ?.let { dto ->
                     Log.d("DrugRepositoryImpl", "Found drug: ${dto.drug_name}")
-                    dto.toDrug()
+                    dto.toDrug().also { drug ->
+                        if (drug.id != id) {
+                            Log.w("DrugRepositoryImpl", "ID mismatch: expected $id, got ${drug.id}")
+                        }
+                    }
                 }
             
             response
         } catch (e: Exception) {
             Log.e("DrugRepositoryImpl", "Error fetching drug with id: $id", e)
             null
+        }
+    }
+
+    override suspend fun updateDrug(drug: Drug): Drug = withContext(Dispatchers.IO) {
+        try {
+            Log.d("DrugRepositoryImpl", "Starting update for drug: ${drug.id}")
+            Log.d("DrugRepositoryImpl", "Update payload: $drug")
+            
+            requireNotNull(drug.id) { "Drug ID cannot be null for update operation" }
+            
+            // First verify the drug exists
+            val existingDrug = getDrugById(drug.id)
+            requireNotNull(existingDrug) { "Drug with id ${drug.id} not found" }
+            
+            val drugDto = drug.toDto()
+            
+            val response = client.postgrest["drugs"]
+                .update({
+                    set("main_code", drugDto.main_code)
+                    set("drug_name", drugDto.drug_name)
+                    set("ingredient", drugDto.ingredient)
+                    set("drug_code", drugDto.drug_code)
+                    set("manufacturer", drugDto.manufacturer)
+                    set("covered_by_insurance", drugDto.covered_by_insurance)
+                }) {
+                    filter {
+                        eq("id", drug.id)
+                    }
+                }
+                .decodeSingleOrNull<DrugDto>()
+                ?: throw IllegalStateException("No drug returned after update")
+
+            response.toDrug().also { updatedDrug ->
+                require(updatedDrug.id == drug.id) { 
+                    "ID mismatch after update: expected ${drug.id}, got ${updatedDrug.id}" 
+                }
+                Log.d("DrugRepositoryImpl", "Update successful: $updatedDrug")
+            }
+        } catch (e: Exception) {
+            Log.e("DrugRepositoryImpl", "Error updating drug: ${e.message}")
+            Log.e("DrugRepositoryImpl", "Stack trace: ${e.stackTraceToString()}")
+            throw e
         }
     }
 } 

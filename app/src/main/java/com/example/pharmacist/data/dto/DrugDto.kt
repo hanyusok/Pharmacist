@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 //@SerialName("DrugDto")
 data class DrugDto(
     @SerialName("id")
-    val id: Long? = null,
+    val id: String = "",
     @SerialName("main_code")
     val main_code: String = "",
     @SerialName("ingredient")

@@ -53,7 +53,7 @@ fun DrugListScreen(
     drugs: List<Drug>,
     isLoading: Boolean,
     onSearch: (String) -> Unit,
-    onDrugClick: (Long) -> Unit,
+    onDrugClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -348,7 +348,7 @@ private fun SearchSuggestionItem(
 fun DrugCardPreview() {
     PharmacistTheme {
         val previewDrug = Drug(
-            id = 1,
+            id = "1",
             mainCode = "123",
             ingredient = "Sample Ingredient",
             drugCode = "ABC123",
@@ -371,7 +371,7 @@ fun DrugListScreenPreview() {
             DrugListScreen(
                 drugs = listOf(
                     Drug(
-                        id = 1,
+                        id = "1",
                         mainCode = "ABC123",
                         ingredient = "Paracetamol",
                         drugCode = "PARA001",

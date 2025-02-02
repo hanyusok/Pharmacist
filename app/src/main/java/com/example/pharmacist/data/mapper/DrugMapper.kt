@@ -13,4 +13,16 @@ fun DrugDto.toDrug(): Drug {
         manufacturer = manufacturer,
         isCoveredByInsurance = covered_by_insurance
     )
+}
+
+fun Drug.toDto(): DrugDto {
+    return DrugDto(
+        id = id,
+        main_code = mainCode,
+        ingredient = ingredient,
+        drug_code = drugCode,
+        drug_name = drugName,
+        manufacturer = manufacturer,
+        covered_by_insurance = isCoveredByInsurance
+    )
 } 

@@ -13,12 +13,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.ui.DrugViewModel
+import com.example.pharmacist.ui.screens.DrugEditScreen
 
 
 sealed class Screen(val route: String) {
     object DrugList : Screen("drug_list")
     object DrugDetail : Screen("drug_detail/{drugId}") {
-        fun createRoute(drugId: Long) = "drug_detail/$drugId"
+        fun createRoute(drugId: String) = "drug_detail/$drugId"
+    }
+    object DrugEdit : Screen("drug_edit/{drugId}") {
+        fun createRoute(drugId: String) = "drug_edit/$drugId"
     }
 }
 
@@ -48,10 +52,29 @@ fun NavGraph(
         composable(
             route = Screen.DrugDetail.route,
             arguments = listOf(
-                navArgument("drugId") { type = NavType.LongType }
+                navArgument("drugId") { type = NavType.StringType }
             )
         ) {
             DrugDetailScreen(
+                onNavigateBack = { navController.navigateUp() },
+                onNavigateToEdit = { drugId ->
+                    navController.navigate(Screen.DrugEdit.createRoute(drugId))
+                }
+            )
+        }
+        
+        composable(
+            route = Screen.DrugEdit.route,
+            arguments = listOf(
+                navArgument("drugId") { 
+                    type = NavType.StringType 
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val drugId = backStackEntry.arguments?.getString("drugId")
+            DrugEditScreen(
+                drugId = drugId,
                 onNavigateBack = { navController.navigateUp() }
             )
         }

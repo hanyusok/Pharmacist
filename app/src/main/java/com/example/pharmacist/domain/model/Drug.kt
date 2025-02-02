@@ -1,7 +1,7 @@
 package com.example.pharmacist.domain.model
 
 data class Drug(
-    val id: Long?,
+    val id: String,
     val mainCode: String,
     val ingredient: String,
     val drugCode: String,

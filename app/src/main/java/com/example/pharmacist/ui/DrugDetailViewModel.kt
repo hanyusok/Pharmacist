@@ -19,7 +19,7 @@ class DrugDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val drugId: Long = checkNotNull(savedStateHandle["drugId"])
+    private val drugId: String = checkNotNull(savedStateHandle["drugId"])
 
     private val _drug = MutableStateFlow<Drug?>(null)
     val drug: StateFlow<Drug?> = _drug.asStateFlow()
