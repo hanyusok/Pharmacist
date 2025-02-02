@@ -31,11 +31,17 @@ class DrugViewModel @Inject constructor(
         loadDrugs()
     }
 
-    fun loadDrugs() {
+    fun loadDrugs(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
                 _error.value = null
+                
+                // Clear existing data if force refresh
+                if (forceRefresh) {
+                    _drugs.value = emptyList()
+                }
+                
                 _drugs.value = repository.getDrugs()
                 Log.d("DrugViewModel", "Loaded ${_drugs.value.size} drugs")
             } catch (e: Exception) {

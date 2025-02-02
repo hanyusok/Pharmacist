@@ -11,9 +11,11 @@ import com.example.pharmacist.ui.screens.DrugDetailScreen
 import com.example.pharmacist.ui.screens.DrugListScreen
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.ui.DrugViewModel
 import com.example.pharmacist.ui.screens.DrugEditScreen
+import com.example.pharmacist.ui.DrugDetailViewModel
 
 
 sealed class Screen(val route: String) {
@@ -54,8 +56,12 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("drugId") { type = NavType.StringType }
             )
-        ) {
+        ) { _ ->
+            val drugDetailViewModel: DrugDetailViewModel = hiltViewModel(
+                remember { navController.getBackStackEntry(Screen.DrugDetail.route) }
+            )
             DrugDetailScreen(
+                viewModel = drugDetailViewModel,
                 onNavigateBack = { navController.navigateUp() },
                 onNavigateToEdit = { drugId ->
                     navController.navigate(Screen.DrugEdit.createRoute(drugId))
@@ -73,9 +79,19 @@ fun NavGraph(
             )
         ) { backStackEntry ->
             val drugId = backStackEntry.arguments?.getString("drugId")
+            val drugListViewModel: DrugViewModel = hiltViewModel(
+                remember { navController.getBackStackEntry(Screen.DrugList.route) }
+            )
+            val drugDetailViewModel: DrugDetailViewModel = hiltViewModel(
+                remember { navController.getBackStackEntry(Screen.DrugDetail.route) }
+            )
             DrugEditScreen(
                 drugId = drugId,
-                onNavigateBack = { navController.navigateUp() }
+                onNavigateBack = { navController.navigateUp() },
+                onUpdateComplete = {
+                    drugListViewModel.loadDrugs(forceRefresh = true)
+                    drugDetailViewModel.refresh()
+                }
             )
         }
     }

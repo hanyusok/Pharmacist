@@ -18,7 +18,8 @@ import com.example.pharmacist.ui.DrugEditViewModel
 fun DrugEditScreen(
     drugId: String?,
     viewModel: DrugEditViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onUpdateComplete: () -> Unit = {}
 ) {
     val drug by viewModel.drug.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -40,7 +41,14 @@ fun DrugEditScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.saveDrug(onSuccess = onNavigateBack) }) {
+                    IconButton(
+                        onClick = { 
+                            viewModel.saveDrug(
+                                onSuccess = onNavigateBack,
+                                onUpdateComplete = onUpdateComplete
+                            )
+                        }
+                    ) {
                         Icon(Icons.Default.Save, "Save")
                     }
                 }

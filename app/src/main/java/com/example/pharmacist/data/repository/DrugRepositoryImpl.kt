@@ -140,7 +140,7 @@ class DrugRepositoryImpl @Inject constructor(
 
     override suspend fun updateDrug(drug: Drug): Drug = withContext(Dispatchers.IO) {
         try {
-            Log.d("DrugRepositoryImpl", "Starting update for drug: ${drug.id}")
+            Log.d("DrugRepositoryImpl", "Starting update operation for drug ID: ${drug.id}")
             Log.d("DrugRepositoryImpl", "Update payload: $drug")
             
             requireNotNull(drug.id) { "Drug ID cannot be null for update operation" }
@@ -151,27 +151,33 @@ class DrugRepositoryImpl @Inject constructor(
             
             val drugDto = drug.toDto()
             
-            val response = client.postgrest["drugs"]
-                .update({
-                    set("main_code", drugDto.main_code)
-                    set("drug_name", drugDto.drug_name)
-                    set("ingredient", drugDto.ingredient)
-                    set("drug_code", drugDto.drug_code)
-                    set("manufacturer", drugDto.manufacturer)
-                    set("covered_by_insurance", drugDto.covered_by_insurance)
-                }) {
-                    filter {
-                        eq("id", drug.id)
-                    }
-                }
-                .decodeSingleOrNull<DrugDto>()
-                ?: throw IllegalStateException("No drug returned after update")
+            // Add more detailed logging before the update
+            Log.d("DrugRepositoryImpl", "Sending update request to Supabase")
+            Log.d("DrugRepositoryImpl", "DTO to be sent: $drugDto")
 
-            response.toDrug().also { updatedDrug ->
-                require(updatedDrug.id == drug.id) { 
-                    "ID mismatch after update: expected ${drug.id}, got ${updatedDrug.id}" 
-                }
-                Log.d("DrugRepositoryImpl", "Update successful: $updatedDrug")
+            try {
+                client.postgrest["drugs"]
+                    .update({
+                        set("main_code", drugDto.main_code)
+                        set("drug_name", drugDto.drug_name)
+                        set("ingredient", drugDto.ingredient)
+                        set("drug_code", drugDto.drug_code)
+                        set("manufacturer", drugDto.manufacturer)
+                        set("covered_by_insurance", drugDto.covered_by_insurance)
+                    }) {
+                        filter {
+                            eq("id", drug.id)
+                        }
+                    }
+
+                Log.d("DrugRepositoryImpl", "Update successful")
+                return@withContext drug
+
+            } catch (e: Exception) {
+                Log.e("DrugRepositoryImpl", "Update failed with error", e)
+                Log.e("DrugRepositoryImpl", "Error type: ${e.javaClass.simpleName}")
+                Log.e("DrugRepositoryImpl", "Error message: ${e.message}")
+                throw IllegalStateException("Failed to update drug: ${e.message}", e)
             }
         } catch (e: Exception) {
             Log.e("DrugRepositoryImpl", "Error updating drug: ${e.message}")
