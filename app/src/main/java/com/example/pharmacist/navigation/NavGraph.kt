@@ -18,9 +18,11 @@ import com.example.pharmacist.ui.screens.DrugEditScreen
 import com.example.pharmacist.ui.DrugDetailViewModel
 import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
+import com.example.pharmacist.ui.screens.LoginScreen
 
 
 sealed class Screen(val route: String) {
+    object Login : Screen("login")
     object DrugList : Screen("drug_list")
     object DrugDetail : Screen("drug_detail/{drugId}") {
         fun createRoute(drugId: String) = "drug_detail/$drugId"
@@ -33,12 +35,23 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun NavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Login.route
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.DrugList.route
+        startDestination = startDestination
     ) {
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(Screen.DrugList.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
         composable(Screen.DrugList.route) {
             val viewModel: DrugViewModel = hiltViewModel()
             val drugs by viewModel.drugs.collectAsState()

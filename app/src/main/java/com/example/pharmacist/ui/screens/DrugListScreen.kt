@@ -49,6 +49,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.pharmacist.ui.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +60,8 @@ fun DrugListScreen(
     isLoading: Boolean,
     onSearch: (String) -> Unit,
     onDrugClick: (String) -> Unit,
-    onAddNewDrug: () -> Unit
+    onAddNewDrug: () -> Unit,
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
@@ -77,6 +81,23 @@ fun DrugListScreen(
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
+        },
+        topBar = {
+            TopAppBar(
+                title = { Text("Drugs") },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            authViewModel.signOut()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
+                            contentDescription = "Sign Out"
+                        )
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize()) {

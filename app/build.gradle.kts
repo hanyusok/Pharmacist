@@ -61,7 +61,7 @@ dependencies {
     
     // Supabase - using version catalog
     implementation(libs.supabase.postgrest)
-//    implementation(libs.supabase.auth)
+    implementation(libs.supabase.auth)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.logging)
     
