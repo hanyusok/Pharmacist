@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pharmacist.ui.auth.AuthState
 import com.example.pharmacist.ui.auth.AuthViewModel
+import com.example.pharmacist.ui.auth.AuthState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +28,18 @@ fun LoginScreen(
             is AuthState.NavigateToDrugList -> {
                 onLoginSuccess()
             }
-            else -> {} // Handle other states if needed
+            is AuthState.Unauthenticated -> {
+                // Reset fields or show message if needed
+            }
+            is AuthState.Error -> {
+                // Error is already handled in the UI
+            }
+            is AuthState.Initial -> {
+                // Initial state, no action needed
+            }
+            is AuthState.Authenticated -> {
+                // Handle authenticated state if needed
+            }
         }
     }
 

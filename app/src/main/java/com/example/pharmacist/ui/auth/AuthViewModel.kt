@@ -34,6 +34,7 @@ class AuthViewModel @Inject constructor(
             client.auth.sessionStatus.collect {
                 when(it) {
                     is SessionStatus.Authenticated -> {
+                        _isLoading.value = false
                         // Always set to Authenticated first
                         _authState.value = AuthState.Authenticated
                         // Then navigate if it's a new authentication
@@ -42,9 +43,11 @@ class AuthViewModel @Inject constructor(
                         }
                     }
                     is SessionStatus.NotAuthenticated -> {
+                        _isLoading.value = false
                         _authState.value = AuthState.Unauthenticated
                     }
                     is SessionStatus.NetworkError -> {
+                        _isLoading.value = false
                         _authState.value = AuthState.Error("Network error")
                     }
                     is SessionStatus.LoadingFromStorage -> {
@@ -67,9 +70,8 @@ class AuthViewModel @Inject constructor(
                 // Set navigation state after successful sign in
                 _authState.value = AuthState.NavigateToDrugList
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Authentication failed")
-            } finally {
                 _isLoading.value = false
+                _authState.value = AuthState.Error(e.message ?: "Unknown error occurred")
             }
         }
     }
