@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Output
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -92,14 +93,14 @@ fun DrugListScreen(
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Logout,
+                            imageVector = Icons.Default.Output,
                             contentDescription = "Sign Out"
                         )
                     }
                 }
             )
         }
-    ) { padding ->
+    ) { _ ->
         Column(modifier = Modifier.fillMaxSize()) {
             DockedSearchBar(
                 query = searchQuery,
@@ -141,7 +142,7 @@ fun DrugListScreen(
                     if (isSearchActive) {
                         // Show close/back button when search is active
                         IconButton(
-                            onClick = { 
+                            onClick = {
                                 if (searchQuery.isNotEmpty()) {
                                     searchQuery = ""
                                 } else {
@@ -150,13 +151,13 @@ fun DrugListScreen(
                             }
                         ) {
                             Icon(
-                                imageVector = if (searchQuery.isNotEmpty()) 
-                                    Icons.Default.Clear 
-                                else 
+                                imageVector = if (searchQuery.isNotEmpty())
+                                    Icons.Default.Clear
+                                else
                                     Icons.Default.ArrowBack,
-                                contentDescription = if (searchQuery.isNotEmpty()) 
-                                    "Clear search" 
-                                else 
+                                contentDescription = if (searchQuery.isNotEmpty())
+                                    "Clear search"
+                                else
                                     "Close search",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -190,7 +191,7 @@ fun DrugListScreen(
                                     Text("Clear All")
                                 }
                             }
-                            
+
                             recentSearches.forEach { recent ->
                                 SearchSuggestionItem(
                                     text = recent,
@@ -206,15 +207,15 @@ fun DrugListScreen(
                             }
                         }
                     }
-                    
+
                     // Show search results/suggestions based on current query
                     if (searchQuery.isNotEmpty()) {
                         // Filter drugs that match the query
-                        val suggestions = drugs.filter { 
+                        val suggestions = drugs.filter {
                             it.drugName.contains(searchQuery, ignoreCase = true) ||
                             it.ingredient.contains(searchQuery, ignoreCase = true)
                         }.take(5)  // Limit to 5 suggestions
-                        
+
                         suggestions.forEach { drug ->
                             SearchSuggestionItem(
                                 text = drug.drugName,

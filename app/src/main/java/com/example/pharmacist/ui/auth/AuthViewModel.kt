@@ -3,14 +3,14 @@ package com.example.pharmacist.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.jan.supabase.gotrue.auth.currentSession
-import io.github.jan.supabase.gotrue.gotrue
-import io.github.jan.supabase.gotrue.providers.Email
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.gotrue.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,10 +31,27 @@ class AuthViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
-            _authState.value = if (client.auth.currentSession != null) {
-                AuthState.Authenticated
-            } else {
-                AuthState.Unauthenticated
+            client.auth.sessionStatus.collect {
+                when(it) {
+                    is SessionStatus.Authenticated -> {
+                        // Always set to Authenticated first
+                        _authState.value = AuthState.Authenticated
+                        // Then navigate if it's a new authentication
+                        if (it.oldStatus !is SessionStatus.Authenticated) {
+                            _authState.value = AuthState.NavigateToDrugList
+                        }
+                    }
+                    is SessionStatus.NotAuthenticated -> {
+                        _authState.value = AuthState.Unauthenticated
+                    }
+                    is SessionStatus.NetworkError -> {
+                        _authState.value = AuthState.Error("Network error")
+                    }
+                    is SessionStatus.LoadingFromStorage -> {
+                        // Handle the loading state, typically showing a loading indicator
+                        _isLoading.value = true
+                    }
+                }
             }
         }
     }
@@ -43,11 +60,12 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                client.gotrue.signInWith(Email) {
+                client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
                 }
-                _authState.value = AuthState.Authenticated
+                // Set navigation state after successful sign in
+                _authState.value = AuthState.NavigateToDrugList
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Authentication failed")
             } finally {
@@ -60,7 +78,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                client.gotrue.signOut()
+                client.auth.signOut()
                 _authState.value = AuthState.Unauthenticated
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Sign out failed")
@@ -75,5 +93,6 @@ sealed class AuthState {
     object Initial : AuthState()
     object Authenticated : AuthState()
     object Unauthenticated : AuthState()
+    object NavigateToDrugList : AuthState()
     data class Error(val message: String) : AuthState()
 } 

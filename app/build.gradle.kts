@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.supabase.auth)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.logging)
+//    implementation("io.github.jan-tennert.supabase:gotrue-kt:2.1.3")
     
     // Hilt
     implementation(libs.hilt.android)

@@ -24,8 +24,11 @@ fun LoginScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthState.Authenticated) {
-            onLoginSuccess()
+        when (authState) {
+            is AuthState.NavigateToDrugList -> {
+                onLoginSuccess()
+            }
+            else -> {} // Handle other states if needed
         }
     }
 
