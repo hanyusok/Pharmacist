@@ -2,50 +2,23 @@ package com.example.pharmacist.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.material3.Scaffold
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.pharmacist.ui.screens.DrugDetailScreen
-import com.example.pharmacist.ui.screens.DrugListScreen
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.pharmacist.ui.DrugViewModel
-import com.example.pharmacist.ui.screens.DrugEditScreen
-import com.example.pharmacist.ui.DrugDetailViewModel
-import com.example.pharmacist.ui.OrdersScreen
-import com.example.pharmacist.ui.screens.LoginScreen
-import com.example.pharmacist.ui.screens.SignUpScreen
-import com.example.pharmacist.ui.screens.UserProfileScreen
-import com.example.pharmacist.ui.screens.CreateOrderScreen
-import com.example.pharmacist.ui.screens.OrderDetailScreen
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.pharmacist.ui.components.BottomNavBar
-
-sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object DrugList : Screen("drug_list")
-    object DrugDetail : Screen("drug_detail/{drugId}") {
-        fun createRoute(drugId: String) = "drug_detail/$drugId"
-    }
-    object DrugEdit : Screen("drug_edit/{drugId}") {
-        fun createRoute(drugId: String?) = "drug_edit/$drugId"
-    }
-    object AddDrug : Screen("add_drug")
-    object SignUp : Screen("signup")
-    object Profile : Screen("profile")
-    object Orders : Screen("orders")
-    object OrderDetail : Screen("order_detail/{orderId}") {
-        fun createRoute(orderId: String) = "order_detail/$orderId"
-    }
-    object CreateOrder : Screen("create_order")
-}
+import com.example.pharmacist.ui.DrugViewModel
+import com.example.pharmacist.ui.DrugDetailViewModel
+import com.example.pharmacist.ui.screens.*
 
 @Composable
 fun NavGraph(
