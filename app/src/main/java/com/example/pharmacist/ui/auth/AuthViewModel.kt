@@ -11,11 +11,18 @@ import io.github.jan.supabase.gotrue.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
+//import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import com.example.pharmacist.domain.model.UserData
+import kotlinx.serialization.json.JsonPrimitive
+import com.example.pharmacist.data.dto.UserProfileDto
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -36,7 +43,6 @@ class AuthViewModel @Inject constructor(
 
     init {
         checkAuthState()
-        loadUserProfile()
     }
 
     private fun checkAuthState() {
@@ -45,8 +51,9 @@ class AuthViewModel @Inject constructor(
                 when(it) {
                     is SessionStatus.Authenticated -> {
                         _isLoading.value = false
-                        loadUserProfile()
+                        // Always set to Authenticated first
                         _authState.value = AuthState.Authenticated
+                        // Then navigate if it's a new authentication
                         if (it.oldStatus !is SessionStatus.Authenticated) {
                             _authState.value = AuthState.NavigateToDrugList
                         }
@@ -54,13 +61,13 @@ class AuthViewModel @Inject constructor(
                     is SessionStatus.NotAuthenticated -> {
                         _isLoading.value = false
                         _authState.value = AuthState.Unauthenticated
-                        _userData.value = null
                     }
                     is SessionStatus.NetworkError -> {
                         _isLoading.value = false
                         _authState.value = AuthState.Error("Network error")
                     }
                     is SessionStatus.LoadingFromStorage -> {
+                        // Handle the loading state, typically showing a loading indicator
                         _isLoading.value = true
                     }
                 }
@@ -76,6 +83,7 @@ class AuthViewModel @Inject constructor(
                     this.email = email
                     this.password = password
                 }
+                // Set navigation state after successful sign in
                 _authState.value = AuthState.NavigateToDrugList
             } catch (e: Exception) {
                 _isLoading.value = false
@@ -105,10 +113,12 @@ class AuthViewModel @Inject constructor(
                 client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
+                    // Add user metadata
                     data = buildJsonObject {
                         put("full_name", name)
                     }
                 }
+                // After successful signup, automatically sign in
                 client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
@@ -126,23 +136,43 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val user = client.auth.currentUserOrNull()
-                if (user != null) {
-                    Log.d("AuthViewModel", "Current user: ${user.email}, metadata: ${user.userMetadata}")
+                val session = client.auth.currentSessionOrNull()
+                if (session != null) {
+                    val userId = session.user?.id.toString()
                     
+                    // Try to load from user_profiles table first
+                    val profile = try {
+                        client.postgrest["user_profiles"]
+                            .select { 
+                                filter { eq("id", userId) }
+                            }
+                            .decodeSingle<UserProfileDto>()
+                    } catch (e: Exception) {
+                        // If profile doesn't exist in table, create it from auth metadata
+                        val user = session.user
+                        val metadata = user?.userMetadata
+                        val name = metadata?.get("full_name")?.toString() ?: ""
+                        
+                        val newProfile = UserProfileDto(
+                            id = userId,
+                            email = user?.email ?: "",
+                            fullName = name
+                        )
+                        
+                        // Insert the profile into the database
+                        client.postgrest["user_profiles"]
+                            .insert(newProfile)
+                            .decodeSingle<UserProfileDto>()
+                    }
+
                     _userData.value = UserData(
-                        email = user.email ?: "",
-                        name = user.userMetadata?.get("full_name")?.toString() ?: "",
-                        id = user.id
+                        email = profile.email,
+                        name = profile.fullName
                     )
-                } else {
-                    Log.d("AuthViewModel", "No current user found")
-                    _userData.value = null
-                    _authState.value = AuthState.Unauthenticated
                 }
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Error loading user profile", e)
-                _authState.value = AuthState.Error(e.message ?: "Failed to load profile")
+                Log.e("AuthViewModel", "Failed to load user profile", e)
+                _error.value = e.message ?: "Failed to load user profile"
             } finally {
                 _isLoading.value = false
             }
@@ -153,24 +183,38 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val currentUser = client.auth.currentUserOrNull()
-                if (currentUser == null) {
-                    _authState.value = AuthState.Error("No authenticated user found")
-                    return@launch
-                }
-
+                
+                // 1. Update auth metadata
                 client.auth.modifyUser {
-                    this.email = email
                     data = buildJsonObject {
-                        put("full_name", name)
+                        put("full_name", JsonPrimitive(name))
                     }
                 }
 
-                loadUserProfile()
-                
+                // 2. Get current user ID
+                val userId = client.auth.currentUserOrNull()?.id
+                if (userId == null) {
+                    throw Exception("User not authenticated")
+                }
+
+                // 3. Update or insert into user_profiles table
+                val userProfile = UserProfileDto(
+                    id = userId,
+                    email = email,
+                    fullName = name
+                )
+
+                client.postgrest["user_profiles"]
+                    .upsert(userProfile) {
+                        select()
+                    }
+
+                // 4. Update local state
+                _userData.value = UserData(email = email, name = name)
                 _authState.value = AuthState.ProfileUpdated
+                
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Error updating profile", e)
+                Log.e("AuthViewModel", "Profile update failed", e)
                 _authState.value = AuthState.Error(e.message ?: "Profile update failed")
             } finally {
                 _isLoading.value = false
@@ -188,17 +232,11 @@ class AuthViewModel @Inject constructor(
 }
 
 sealed class AuthState {
-    object Initial : AuthState()
-    object Authenticated : AuthState()
-    object Unauthenticated : AuthState()
-    object NavigateToDrugList : AuthState()
-    object SignUpSuccess : AuthState()
-    object ProfileUpdated : AuthState()
+    data object Initial : AuthState()
+    data object Authenticated : AuthState()
+    data object Unauthenticated : AuthState()
+    data object NavigateToDrugList : AuthState()
+    data object SignUpSuccess : AuthState()
+    data object ProfileUpdated : AuthState()
     data class Error(val message: String) : AuthState()
-}
-
-data class UserData(
-    val email: String,
-    val name: String,
-    val id: String
-) 
+} 
