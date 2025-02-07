@@ -66,6 +66,11 @@ fun NavGraph(
                 },
                 onAddNewDrug = {
                     navController.navigate(Screen.AddDrug.route)
+                },
+                onSignOutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.DrugList.route) { inclusive = true }
+                    }
                 }
             )
         }
