@@ -19,6 +19,8 @@ import com.example.pharmacist.ui.DrugDetailViewModel
 import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
 import com.example.pharmacist.ui.screens.LoginScreen
+import com.example.pharmacist.ui.screens.SignUpScreen
+import com.example.pharmacist.ui.screens.UserProfileScreen
 
 
 sealed class Screen(val route: String) {
@@ -31,6 +33,8 @@ sealed class Screen(val route: String) {
         fun createRoute(drugId: String?) = "drug_edit/$drugId"
     }
     object AddDrug : Screen("add_drug")
+    object SignUp : Screen("signup")
+    object Profile : Screen("profile")
 }
 
 @Composable
@@ -66,6 +70,11 @@ fun NavGraph(
                 },
                 onAddNewDrug = {
                     navController.navigate(Screen.AddDrug.route)
+                },
+                onSignOutSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.DrugList.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -129,6 +138,27 @@ fun NavGraph(
                 onUpdateComplete = {
                     drugListViewModel.loadDrugs(forceRefresh = true)
                 }
+            )
+        }
+
+        composable(Screen.SignUp.route) {
+            SignUpScreen(
+                onSignUpSuccess = {
+                    navController.navigate(Screen.DrugList.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            UserProfileScreen(
+                onNavigateBack = { navController.navigateUp() }
             )
         }
     }

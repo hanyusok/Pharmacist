@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -89,6 +91,46 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    fun signUp(email: String, password: String, name: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                client.auth.signUpWith(Email) {
+                    this.email = email
+                    this.password = password
+                    // Add user metadata
+                    data = buildJsonObject {
+                        put("full_name", name)
+                    }
+                }
+                // After successful signup, automatically sign in
+                client.auth.signInWith(Email) {
+                    this.email = email
+                    this.password = password
+                }
+                _authState.value = AuthState.NavigateToDrugList
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Sign up failed")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateProfile(name: String, email: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                // Update user profile in your backend
+                _authState.value = AuthState.ProfileUpdated
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Profile update failed")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 }
 
 sealed class AuthState {
@@ -96,5 +138,7 @@ sealed class AuthState {
     object Authenticated : AuthState()
     object Unauthenticated : AuthState()
     object NavigateToDrugList : AuthState()
+    object SignUpSuccess : AuthState()
+    object ProfileUpdated : AuthState()
     data class Error(val message: String) : AuthState()
 } 

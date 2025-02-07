@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.pharmacist.R
+//import com.example.pharmacist.R
 import com.example.pharmacist.domain.model.Drug
 import com.example.pharmacist.ui.theme.PharmacistTheme
 import androidx.compose.material.icons.Icons
@@ -53,6 +54,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.ui.auth.AuthViewModel
+import com.example.pharmacist.ui.auth.AuthState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Switch
+import androidx.compose.material3.OutlinedTextField
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,8 +73,19 @@ fun DrugListScreen(
     onSearch: (String) -> Unit,
     onDrugClick: (String) -> Unit,
     onAddNewDrug: () -> Unit,
+    onSignOutSuccess: () -> Unit,
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
+    val authState by authViewModel.authState.collectAsState()
+    
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Unauthenticated -> {
+                onSignOutSuccess()
+            }
+            else -> {}
+        }
+    }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     
@@ -85,7 +107,7 @@ fun DrugListScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text("Drugs") },
+                title = { Text("Drugs List") }, 
                 actions = {
                     IconButton(
                         onClick = {
@@ -100,8 +122,12 @@ fun DrugListScreen(
                 }
             )
         }
-    ) { _ ->
-        Column(modifier = Modifier.fillMaxSize()) {
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding())
+        ) {
             DockedSearchBar(
                 query = searchQuery,
                 onQueryChange = { newQuery ->
@@ -123,7 +149,7 @@ fun DrugListScreen(
                 onActiveChange = { isSearchActive = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = {
                     Text(
                         text = "Search drugs...",
@@ -230,35 +256,42 @@ fun DrugListScreen(
                 }
             }
 
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else if (drugs.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No drugs found",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(drugs) { drug ->
-                        DrugCard(
-                            drug = drug,
-                            onClick = { drug.id?.let { onDrugClick(it) } }
+            // Content area needs different padding
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (drugs.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No drugs found",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(drugs) { drug ->
+                            DrugCard(
+                                drug = drug,
+                                onClick = { drug.id?.let { onDrugClick(it) } }
+                            )
+                        }
                     }
                 }
             }
@@ -423,7 +456,8 @@ fun DrugListScreenPreview() {
                 isLoading = false,
                 onSearch = {},
                 onDrugClick = {},
-                onAddNewDrug = {}
+                onAddNewDrug = {},
+                onSignOutSuccess = {}
             )
         }
     }
