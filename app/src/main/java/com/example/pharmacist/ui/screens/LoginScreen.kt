@@ -15,6 +15,7 @@ import com.example.pharmacist.ui.auth.AuthState
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
@@ -22,6 +23,19 @@ fun LoginScreen(
     
     val authState by viewModel.authState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    fun validateInput(): Boolean {
+        if (email.isBlank() || password.isBlank()) {
+            viewModel.setError("Email and password are required")
+            return false
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            viewModel.setError("Invalid email format")
+            return false
+        }
+        return true
+    }
 
     LaunchedEffect(authState) {
         when (authState) {
@@ -34,13 +48,18 @@ fun LoginScreen(
             is AuthState.Error -> {
                 // Error is already handled in the UI
             }
-            is AuthState.Initial -> {
-                // Initial state, no action needed
-            }
-            is AuthState.Authenticated -> {
-                // Handle authenticated state if needed
+            else -> {
+                // Handle all other states
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
+
+    LaunchedEffect(onNavigateToSignUp) {
+        viewModel.clearError()
     }
 
     Column(
@@ -75,16 +94,20 @@ fun LoginScreen(
                 .padding(bottom = 24.dp)
         )
 
-        if (authState is AuthState.Error) {
+        if (error != null) {
             Text(
-                text = (authState as AuthState.Error).message,
+                text = error!!,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
         Button(
-            onClick = { viewModel.signIn(email, password) },
+            onClick = { 
+                if (validateInput()) {
+                    viewModel.signIn(email, password)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
@@ -98,6 +121,13 @@ fun LoginScreen(
             } else {
                 Text("Sign In")
             }
+        }
+
+        TextButton(
+            onClick = onNavigateToSignUp,
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Don't have an account? Sign Up")
         }
     }
 } 

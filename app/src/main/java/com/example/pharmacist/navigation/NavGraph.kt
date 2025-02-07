@@ -52,6 +52,9 @@ fun NavGraph(
                     navController.navigate(Screen.DrugList.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.SignUp.route)
                 }
             )
         }
@@ -75,6 +78,9 @@ fun NavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.DrugList.route) { inclusive = true }
                     }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
                 }
             )
         }

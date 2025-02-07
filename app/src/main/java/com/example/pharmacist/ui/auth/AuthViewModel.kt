@@ -1,5 +1,6 @@
 package com.example.pharmacist.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,8 +28,15 @@ class AuthViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _userData = MutableStateFlow<UserData?>(null)
+    val userData: StateFlow<UserData?> = _userData.asStateFlow()
+
     init {
         checkAuthState()
+        loadUserProfile()
     }
 
     private fun checkAuthState() {
@@ -37,9 +45,8 @@ class AuthViewModel @Inject constructor(
                 when(it) {
                     is SessionStatus.Authenticated -> {
                         _isLoading.value = false
-                        // Always set to Authenticated first
+                        loadUserProfile()
                         _authState.value = AuthState.Authenticated
-                        // Then navigate if it's a new authentication
                         if (it.oldStatus !is SessionStatus.Authenticated) {
                             _authState.value = AuthState.NavigateToDrugList
                         }
@@ -47,13 +54,13 @@ class AuthViewModel @Inject constructor(
                     is SessionStatus.NotAuthenticated -> {
                         _isLoading.value = false
                         _authState.value = AuthState.Unauthenticated
+                        _userData.value = null
                     }
                     is SessionStatus.NetworkError -> {
                         _isLoading.value = false
                         _authState.value = AuthState.Error("Network error")
                     }
                     is SessionStatus.LoadingFromStorage -> {
-                        // Handle the loading state, typically showing a loading indicator
                         _isLoading.value = true
                     }
                 }
@@ -69,7 +76,6 @@ class AuthViewModel @Inject constructor(
                     this.email = email
                     this.password = password
                 }
-                // Set navigation state after successful sign in
                 _authState.value = AuthState.NavigateToDrugList
             } catch (e: Exception) {
                 _isLoading.value = false
@@ -99,12 +105,10 @@ class AuthViewModel @Inject constructor(
                 client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
-                    // Add user metadata
                     data = buildJsonObject {
                         put("full_name", name)
                     }
                 }
-                // After successful signup, automatically sign in
                 client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
@@ -118,18 +122,68 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun loadUserProfile() {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val user = client.auth.currentUserOrNull()
+                if (user != null) {
+                    Log.d("AuthViewModel", "Current user: ${user.email}, metadata: ${user.userMetadata}")
+                    
+                    _userData.value = UserData(
+                        email = user.email ?: "",
+                        name = user.userMetadata?.get("full_name")?.toString() ?: "",
+                        id = user.id
+                    )
+                } else {
+                    Log.d("AuthViewModel", "No current user found")
+                    _userData.value = null
+                    _authState.value = AuthState.Unauthenticated
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error loading user profile", e)
+                _authState.value = AuthState.Error(e.message ?: "Failed to load profile")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun updateProfile(name: String, email: String) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                // Update user profile in your backend
+                val currentUser = client.auth.currentUserOrNull()
+                if (currentUser == null) {
+                    _authState.value = AuthState.Error("No authenticated user found")
+                    return@launch
+                }
+
+                client.auth.modifyUser {
+                    this.email = email
+                    data = buildJsonObject {
+                        put("full_name", name)
+                    }
+                }
+
+                loadUserProfile()
+                
                 _authState.value = AuthState.ProfileUpdated
             } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error updating profile", e)
                 _authState.value = AuthState.Error(e.message ?: "Profile update failed")
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun setError(message: String?) {
+        _error.value = message
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
 
@@ -141,4 +195,10 @@ sealed class AuthState {
     object SignUpSuccess : AuthState()
     object ProfileUpdated : AuthState()
     data class Error(val message: String) : AuthState()
-} 
+}
+
+data class UserData(
+    val email: String,
+    val name: String,
+    val id: String
+) 

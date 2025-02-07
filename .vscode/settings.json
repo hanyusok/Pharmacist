@@ -1,3 +1,6 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "node"
+    }
 }

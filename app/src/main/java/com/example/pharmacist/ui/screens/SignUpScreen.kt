@@ -15,6 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +42,34 @@ fun SignUpScreen(
     val authState by viewModel.authState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.clearError()
+    }
+
+    LaunchedEffect(onNavigateToLogin) {
+        viewModel.clearError()
+    }
+
+    fun validateInput(): Boolean {
+        if (email.isBlank() || password.isBlank() || name.isBlank()) {
+            viewModel.setError("All fields are required")
+            return false
+        }
+        if (password != confirmPassword) {
+            viewModel.setError("Passwords do not match")
+            return false
+        }
+        if (password.length < 6) {
+            viewModel.setError("Password must be at least 6 characters")
+            return false
+        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            viewModel.setError("Invalid email format")
+            return false
+        }
+        return true
+    }
 
     Column(
         modifier = Modifier
@@ -93,6 +122,14 @@ fun SignUpScreen(
                 .padding(bottom = 24.dp)
         )
 
+        if (error != null) {
+            Text(
+                text = error!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
         Button(
             onClick = { 
                 if (validateInput()) {
@@ -122,24 +159,4 @@ fun SignUpScreen(
             Text("Already have an account? Sign In")
         }
     }
-}
-
-fun validateInput(): Boolean {
-    if (email.isBlank() || password.isBlank() || name.isBlank()) {
-        viewModel.setError("All fields are required")
-        return false
-    }
-    if (password != confirmPassword) {
-        viewModel.setError("Passwords do not match")
-        return false
-    }
-    if (password.length < 6) {
-        viewModel.setError("Password must be at least 6 characters")
-        return false
-    }
-    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-        viewModel.setError("Invalid email format")
-        return false
-    }
-    return true
 } 

@@ -63,6 +63,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Switch
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ExitToApp
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,9 +76,10 @@ fun DrugListScreen(
     onDrugClick: (String) -> Unit,
     onAddNewDrug: () -> Unit,
     onSignOutSuccess: () -> Unit,
-    authViewModel: AuthViewModel = hiltViewModel()
+    onNavigateToProfile: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-    val authState by authViewModel.authState.collectAsState()
+    val authState by viewModel.authState.collectAsState()
     
     LaunchedEffect(authState) {
         when (authState) {
@@ -107,15 +110,17 @@ fun DrugListScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text("Drugs List") }, 
+                title = { Text("Drug List") },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            authViewModel.signOut()
-                        }
-                    ) {
+                    IconButton(onClick = onNavigateToProfile) {
                         Icon(
-                            imageVector = Icons.Default.Output,
+                            Icons.Default.Person,
+                            contentDescription = "Profile"
+                        )
+                    }
+                    IconButton(onClick = { viewModel.signOut() }) {
+                        Icon(
+                            Icons.Default.ExitToApp,
                             contentDescription = "Sign Out"
                         )
                     }
@@ -457,7 +462,8 @@ fun DrugListScreenPreview() {
                 onSearch = {},
                 onDrugClick = {},
                 onAddNewDrug = {},
-                onSignOutSuccess = {}
+                onSignOutSuccess = {},
+                onNavigateToProfile = {}
             )
         }
     }
