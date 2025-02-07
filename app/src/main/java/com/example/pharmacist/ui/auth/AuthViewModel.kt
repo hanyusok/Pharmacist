@@ -20,9 +20,9 @@ import com.example.pharmacist.domain.model.UserData
 import kotlinx.serialization.json.JsonPrimitive
 import com.example.pharmacist.data.dto.UserProfileDto
 import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+//import kotlinx.datetime.Clock
+//import kotlinx.datetime.TimeZone
+//import kotlinx.datetime.toLocalDateTime
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
