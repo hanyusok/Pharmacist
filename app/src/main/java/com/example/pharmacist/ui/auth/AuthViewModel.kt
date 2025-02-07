@@ -192,10 +192,7 @@ class AuthViewModel @Inject constructor(
                 }
 
                 // 2. Get current user ID
-                val userId = client.auth.currentUserOrNull()?.id
-                if (userId == null) {
-                    throw Exception("User not authenticated")
-                }
+                val userId = client.auth.currentUserOrNull()?.id ?: throw Exception("User not authenticated")
 
                 // 3. Update or insert into user_profiles table
                 val userProfile = UserProfileDto(
