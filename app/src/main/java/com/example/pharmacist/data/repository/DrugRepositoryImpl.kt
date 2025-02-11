@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.pharmacist.domain.model.DrugId
 
 @Singleton
 class DrugRepositoryImpl @Inject constructor(
@@ -103,9 +104,9 @@ class DrugRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDrugById(id: String): Drug? = withContext(Dispatchers.IO) {
+    override suspend fun getDrugById(id: DrugId): Drug? = withContext(Dispatchers.IO) {
         try {
-            Log.d("DrugRepositoryImpl", "Fetching drug with id: $id")
+            Log.d("DrugRepositoryImpl", "Fetching drug with id: ${id.value}")
             
             val response = client.postgrest["drugs"]
                 .select(columns = Columns.list(
@@ -118,70 +119,52 @@ class DrugRepositoryImpl @Inject constructor(
                     "covered_by_insurance"
                 )) {
                     filter {
-                        eq("id", id)
+                        eq("id", id.value)
                     }
                 }
                 .decodeSingleOrNull<DrugDto>()
                 ?.let { dto ->
                     Log.d("DrugRepositoryImpl", "Found drug: ${dto.drug_name}")
-                    dto.toDrug().also { drug ->
-                        if (drug.id != id) {
-                            Log.w("DrugRepositoryImpl", "ID mismatch: expected $id, got ${drug.id}")
-                        }
-                    }
+                    dto.toDrug()
                 }
             
             response
         } catch (e: Exception) {
-            Log.e("DrugRepositoryImpl", "Error fetching drug with id: $id", e)
+            Log.e("DrugRepositoryImpl", "Error fetching drug with id: ${id.value}", e)
             null
         }
     }
 
     override suspend fun updateDrug(drug: Drug): Drug = withContext(Dispatchers.IO) {
         try {
-            Log.d("DrugRepositoryImpl", "Starting update operation for drug ID: ${drug.id}")
+            Log.d("DrugRepositoryImpl", "Starting update operation for drug ID: ${drug.id.value}")
             Log.d("DrugRepositoryImpl", "Update payload: $drug")
-            
-            requireNotNull(drug.id) { "Drug ID cannot be null for update operation" }
             
             // First verify the drug exists
             val existingDrug = getDrugById(drug.id)
-            requireNotNull(existingDrug) { "Drug with id ${drug.id} not found" }
+            requireNotNull(existingDrug) { "Drug with id ${drug.id.value} not found" }
             
             val drugDto = drug.toDto()
             
-            // Add more detailed logging before the update
-            Log.d("DrugRepositoryImpl", "Sending update request to Supabase")
-            Log.d("DrugRepositoryImpl", "DTO to be sent: $drugDto")
-
-            try {
-                client.postgrest["drugs"]
-                    .update({
-                        set("main_code", drugDto.main_code)
-                        set("drug_name", drugDto.drug_name)
-                        set("ingredient", drugDto.ingredient)
-                        set("drug_code", drugDto.drug_code)
-                        set("manufacturer", drugDto.manufacturer)
-                        set("covered_by_insurance", drugDto.covered_by_insurance)
-                    }) {
-                        filter {
-                            eq("id", drug.id)
-                        }
+            client.postgrest["drugs"]
+                .update({
+                    set("main_code", drugDto.main_code)
+                    set("drug_name", drugDto.drug_name)
+                    set("ingredient", drugDto.ingredient)
+                    set("drug_code", drugDto.drug_code)
+                    set("manufacturer", drugDto.manufacturer)
+                    set("covered_by_insurance", drugDto.covered_by_insurance)
+                }) {
+                    filter {
+                        eq("id", drug.id.value)
                     }
+                }
 
-                Log.d("DrugRepositoryImpl", "Update successful")
-                return@withContext drug
+            Log.d("DrugRepositoryImpl", "Update successful")
+            return@withContext drug
 
-            } catch (e: Exception) {
-                Log.e("DrugRepositoryImpl", "Update failed with error", e)
-                Log.e("DrugRepositoryImpl", "Error type: ${e.javaClass.simpleName}")
-                Log.e("DrugRepositoryImpl", "Error message: ${e.message}")
-                throw IllegalStateException("Failed to update drug: ${e.message}", e)
-            }
         } catch (e: Exception) {
-            Log.e("DrugRepositoryImpl", "Error updating drug: ${e.message}")
-            Log.e("DrugRepositoryImpl", "Stack trace: ${e.stackTraceToString()}")
+            Log.e("DrugRepositoryImpl", "Update failed with error", e)
             throw e
         }
     }
@@ -193,11 +176,13 @@ class DrugRepositoryImpl @Inject constructor(
             
             val drugDto = drug.toDto()
             
-            client.postgrest["drugs"]
-                .insert(drugDto)
-
-            Log.d("DrugRepositoryImpl", "Drug created successfully")
-            return@withContext drug
+            // The response will contain the created drug with the UUID
+            val response = client.postgrest["drugs"]
+                .insert(drugDto) { select() }  // Add select() to get the response
+                .decodeSingle<DrugDto>()  // Decode the response
+            
+            Log.d("DrugRepositoryImpl", "Drug created successfully with ID: ${response.id}")
+            return@withContext response.toDrug()
 
         } catch (e: Exception) {
             Log.e("DrugRepositoryImpl", "Create failed with error", e)
@@ -205,14 +190,14 @@ class DrugRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteDrug(drugId: String): Unit = withContext(Dispatchers.IO) {
+    override suspend fun deleteDrug(drugId: DrugId): Unit = withContext(Dispatchers.IO) {
         try {
-            Log.d("DrugRepositoryImpl", "Starting delete operation for drug: $drugId")
+            Log.d("DrugRepositoryImpl", "Starting delete operation for drug: ${drugId.value}")
             
             client.postgrest["drugs"]
                 .delete {
                     filter {
-                        eq("id", drugId)
+                        eq("id", drugId.value)
                     }
                 }
             

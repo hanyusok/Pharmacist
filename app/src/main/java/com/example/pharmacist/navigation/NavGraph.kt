@@ -19,6 +19,8 @@ import com.example.pharmacist.ui.components.BottomNavBar
 import com.example.pharmacist.ui.DrugViewModel
 import com.example.pharmacist.ui.DrugDetailViewModel
 import com.example.pharmacist.ui.screens.*
+import com.example.pharmacist.domain.model.DrugId
+
 
 @Composable
 fun NavGraph(
@@ -44,7 +46,13 @@ fun NavGraph(
                 LoginScreen(
                     onLoginSuccess = {
                         navController.navigate(Screen.DrugList.route) {
-                            popUpTo(Screen.Login.route) { inclusive = true }
+                            popUpTo(Screen.Login.route) { 
+                                inclusive = true  // Remove login from back stack
+                            }
+                            // Set this as the new start destination
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
                         }
                     },
                     onNavigateToSignUp = {

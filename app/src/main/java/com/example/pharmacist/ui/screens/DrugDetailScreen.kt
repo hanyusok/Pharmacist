@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.domain.model.Drug
+import com.example.pharmacist.domain.model.DrugId
 import com.example.pharmacist.ui.DrugDetailViewModel
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -62,7 +63,7 @@ fun DrugDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit
 ) {
-    val drug by remember { viewModel.drug }.collectAsState(initial = null)
+    val drug by viewModel.drug.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isDeleting by viewModel.isDeleting.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -157,7 +158,7 @@ fun DrugDetailScreen(
                 Button(
                     onClick = {
                         showDeleteConfirmDialog = false
-                        viewModel.deleteDrug(onSuccess = onNavigateBack)
+                        drug?.let { viewModel.deleteDrug { onNavigateBack() } }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
@@ -205,10 +206,12 @@ fun DrugDetailScreen(
                 },
                 actions = {
                     // Edit button
-                    IconButton(
-                        onClick = { drug?.id?.let { onNavigateToEdit(it) } }
-                    ) {
-                        Icon(Icons.Default.Edit, "Edit")
+                    drug?.let {
+                        IconButton(
+                            onClick = { onNavigateToEdit(it.id.value) }
+                        ) {
+                            Icon(Icons.Default.Edit, "Edit")
+                        }
                     }
                     // Delete button
                     IconButton(

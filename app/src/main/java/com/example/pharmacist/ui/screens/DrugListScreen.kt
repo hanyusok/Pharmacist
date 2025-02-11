@@ -22,8 +22,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,24 +44,16 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Output
-import androidx.compose.material3.DockedSearchBar
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.East
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pharmacist.ui.auth.AuthViewModel
 import com.example.pharmacist.ui.auth.AuthState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material3.Switch
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ExitToApp
+import com.example.pharmacist.domain.model.DrugId
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +109,7 @@ fun DrugListScreen(
                     }
                     IconButton(onClick = { viewModel.signOut() }) {
                         Icon(
-                            Icons.Default.ExitToApp,
+                            Icons.Default.East,
                             contentDescription = "Sign Out"
                         )
                     }
@@ -185,7 +174,7 @@ fun DrugListScreen(
                                 imageVector = if (searchQuery.isNotEmpty())
                                     Icons.Default.Clear
                                 else
-                                    Icons.Default.ArrowBack,
+                                    Icons.Default.ArrowBackIosNew,
                                 contentDescription = if (searchQuery.isNotEmpty())
                                     "Clear search"
                                 else
@@ -252,7 +241,7 @@ fun DrugListScreen(
                                 text = drug.drugName,
                                 secondaryText = drug.ingredient,
                                 onItemClick = {
-                                    drug.id?.let { onDrugClick(it) }
+                                    onDrugClick(drug.id.value)
                                     isSearchActive = false
                                 }
                             )
@@ -294,7 +283,7 @@ fun DrugListScreen(
                         items(drugs) { drug ->
                             DrugCard(
                                 drug = drug,
-                                onClick = { drug.id?.let { onDrugClick(it) } }
+                                onClick = { onDrugClick(drug.id.value) }
                             )
                         }
                     }
@@ -426,7 +415,7 @@ private fun SearchSuggestionItem(
 fun DrugCardPreview() {
     PharmacistTheme {
         val previewDrug = Drug(
-            id = "1",
+            id = DrugId("1"),
             mainCode = "123",
             ingredient = "Sample Ingredient",
             drugCode = "ABC123",
@@ -449,7 +438,7 @@ fun DrugListScreenPreview() {
             DrugListScreen(
                 drugs = listOf(
                     Drug(
-                        id = "1",
+                        id = DrugId("1") ,
                         mainCode = "ABC123",
                         ingredient = "Paracetamol",
                         drugCode = "PARA001",

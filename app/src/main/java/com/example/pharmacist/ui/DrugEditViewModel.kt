@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pharmacist.data.repository.DrugRepositoryImpl
 import com.example.pharmacist.domain.model.Drug
+import com.example.pharmacist.domain.model.DrugId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,7 +13,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import kotlinx.coroutines.delay
 
 @HiltViewModel
 class DrugEditViewModel @Inject constructor(
@@ -20,18 +20,7 @@ class DrugEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _drug = MutableStateFlow<Drug?>(
-        // Initialize with empty Drug for new creation
-        Drug(
-            id = "",
-            mainCode = "",
-            drugName = "",
-            ingredient = "",
-            drugCode = "",
-            manufacturer = "",
-            isCoveredByInsurance = false
-        )
-    )
+    private val _drug = MutableStateFlow<Drug?>(Drug.empty())
     val drug: StateFlow<Drug?> = _drug.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
@@ -44,15 +33,7 @@ class DrugEditViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                _drug.value = repository.getDrugById(id) ?: Drug(
-                    id = "",
-                    mainCode = "",
-                    drugName = "",
-                    ingredient = "",
-                    drugCode = "",
-                    manufacturer = "",
-                    isCoveredByInsurance = false
-                )
+                _drug.value = repository.getDrugById(DrugId(id)) ?: Drug.empty()
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -75,7 +56,7 @@ class DrugEditViewModel @Inject constructor(
                 Log.d("DrugEditViewModel", "Attempting to save drug: $drugToSave")
                 
                 try {
-                    val savedDrug = if (drugToSave.id.isNullOrEmpty()) {
+                    val savedDrug = if (drugToSave.id.value.isBlank()) {
                         // Create new drug
                         repository.createDrug(drugToSave)
                     } else {
@@ -142,7 +123,7 @@ class DrugEditViewModel @Inject constructor(
         isCoveredByInsurance: Boolean = _drug.value?.isCoveredByInsurance ?: false
     ) {
         _drug.value = Drug(
-            id = _drug.value?.id ?: "",
+            id = _drug.value?.id ?: DrugId(""),
             mainCode = mainCode,
             drugName = drugName,
             ingredient = ingredient,

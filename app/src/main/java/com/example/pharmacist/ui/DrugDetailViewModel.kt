@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pharmacist.data.repository.DrugRepositoryImpl
 import com.example.pharmacist.domain.model.Drug
+import com.example.pharmacist.domain.model.DrugId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,8 +59,8 @@ class DrugDetailViewModel @Inject constructor(
             try {
                 _isLoading.value = true
                 _error.value = null
-                _drug.value = repository.getDrugById(drugId)
-                Log.d("DrugDetailViewModel", "Drug reloaded: ${_drug.value}")
+                _drug.value = repository.getDrugById(DrugId(drugId))
+                Log.d("DrugDetailViewModel", "Drug loaded: ${_drug.value}")
             } catch (e: Exception) {
                 _error.value = e.message
             } finally {
@@ -75,7 +76,7 @@ class DrugDetailViewModel @Inject constructor(
                 _error.value = null
                 
                 Log.d("DrugDetailViewModel", "Attempting to delete drug: $drugId")
-                repository.deleteDrug(drugId)
+                repository.deleteDrug(DrugId(drugId))
                 
                 Log.d("DrugDetailViewModel", "Drug deleted successfully")
                 onSuccess()
