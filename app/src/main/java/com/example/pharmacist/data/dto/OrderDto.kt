@@ -1,5 +1,7 @@
 package com.example.pharmacist.data.dto
 
+import com.example.pharmacist.domain.model.DrugId
+import com.example.pharmacist.domain.model.OrderItem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,7 +16,9 @@ data class OrderDto(
     @SerialName("created_at")
     val createdAt: String = "",
     @SerialName("updated_at")
-    val updatedAt: String = ""
+    val updatedAt: String = "",
+    @SerialName("items")
+    val items: List<OrderItemDto> = emptyList()
 )
 
 @Serializable
@@ -29,4 +33,22 @@ data class OrderItemDto(
     val quantity: Int = 0,
     @SerialName("price")
     val price: Double = 0.0
-) 
+)
+
+fun OrderItemDto.toOrderItem(): OrderItem {
+    return OrderItem(
+        id = id,
+        drugId = DrugId(drugId),  // Convert String to DrugId
+        quantity = quantity,
+        price = price
+    )
+}
+
+fun OrderItem.toDto(): OrderItemDto {
+    return OrderItemDto(
+        id = id,
+        drugId = drugId.value,  // Convert DrugId to String
+        quantity = quantity,
+        price = price
+    )
+} 

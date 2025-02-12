@@ -3,8 +3,6 @@ package com.example.pharmacist.data.repository
 import android.util.Log
 import com.example.pharmacist.data.dto.OrderDto
 import com.example.pharmacist.data.dto.OrderItemDto
-import com.example.pharmacist.data.mapper.toOrder
-import com.example.pharmacist.data.mapper.toDto
 import com.example.pharmacist.domain.model.Order
 import com.example.pharmacist.domain.model.OrderStatus
 import com.example.pharmacist.domain.repository.OrderRepository
@@ -20,18 +18,42 @@ class OrderRepositoryImpl @Inject constructor(
 ) : OrderRepository {
 
     override suspend fun getOrders(): List<Order> {
-        val orders = client.postgrest["orders"]
-            .select()
-            .decodeList<OrderDto>()
+        try {
+            // First, get all orders
+            val orders = client.postgrest["orders"]
+                .select()
+                .decodeList<OrderDto>()
             
-        return orders.map { orderDto ->
-            val items = client.postgrest["order_items"]
+            if (orders.isEmpty()) {
+                return emptyList()
+            }
+            
+            // Get all order items with proper filter syntax
+            val allItems = client.postgrest["order_items"]
                 .select {
                     filter {
-                        eq("order_id", orderDto.id) }
+                        // Using PostgreSQL's IN operator via Supabase's filter DSL
+                        `in`("order_id", orders.map { it.id }.toTypedArray())
                     }
+                }
                 .decodeList<OrderItemDto>()
-            orderDto.toOrder(items)
+            
+            // Group items by order ID
+            val itemsByOrderId = allItems.groupBy { it.orderId }
+            
+            return orders.map { orderDto ->
+                Order(
+                    id = orderDto.id,
+                    userId = orderDto.userId,
+                    status = OrderStatus.valueOf(orderDto.status),
+                    createdAt = orderDto.createdAt,
+                    updatedAt = orderDto.updatedAt,
+                    items = itemsByOrderId[orderDto.id]?.map { it.toOrderItem() } ?: emptyList()
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("OrderRepositoryImpl", "Error fetching orders", e)
+            throw e
         }
     }
 

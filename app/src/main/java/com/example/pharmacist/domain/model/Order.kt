@@ -11,7 +11,7 @@ data class Order(
 
 data class OrderItem(
     val id: String,
-    val drugId: String,
+    val drugId: DrugId,
     val quantity: Int,
     val price: Double
 ) 
