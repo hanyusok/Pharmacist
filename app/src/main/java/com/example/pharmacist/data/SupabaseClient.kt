@@ -1,10 +1,14 @@
 package com.example.pharmacist.data
 
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 
-
+@Module
+@InstallIn(SingletonComponent::class)
 object SupabaseClient {
     val client = createSupabaseClient(
         supabaseUrl = "http://martclinic.zapto.org:8000",
