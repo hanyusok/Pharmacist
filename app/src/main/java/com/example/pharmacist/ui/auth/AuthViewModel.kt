@@ -23,10 +23,11 @@ import io.github.jan.supabase.postgrest.postgrest
 //import kotlinx.datetime.Clock
 //import kotlinx.datetime.TimeZone
 //import kotlinx.datetime.toLocalDateTime
+import com.example.pharmacist.data.LocalSupabaseClient
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val client: SupabaseClient
+    private val client: LocalSupabaseClient
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Initial)
@@ -47,7 +48,7 @@ class AuthViewModel @Inject constructor(
 
     private fun checkAuthState() {
         viewModelScope.launch {
-            client.auth.sessionStatus.collect {
+            client.client.auth.sessionStatus.collect {
                 when(it) {
                     is SessionStatus.Authenticated -> {
                         _isLoading.value = false
@@ -79,7 +80,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                client.auth.signInWith(Email) {
+                client.client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
                 }
@@ -96,7 +97,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                client.auth.signOut()
+                client.client.auth.signOut()
                 _authState.value = AuthState.Unauthenticated
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Sign out failed")
@@ -110,7 +111,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                client.auth.signUpWith(Email) {
+                client.client.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
                     // Add user metadata
@@ -119,7 +120,7 @@ class AuthViewModel @Inject constructor(
                     }
                 }
                 // After successful signup, automatically sign in
-                client.auth.signInWith(Email) {
+                client.client.auth.signInWith(Email) {
                     this.email = email
                     this.password = password
                 }
@@ -136,17 +137,18 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val session = client.auth.currentSessionOrNull()
+                val session = client.client.auth.currentSessionOrNull()
                 if (session != null) {
                     val userId = session.user?.id.toString()
                     
                     // Try to load from user_profiles table first
                     val profile = try {
-                        client.postgrest["user_profiles"]
+                        client.client.postgrest["user_profiles"]
                             .select { 
                                 filter { eq("id", userId) }
                             }
-                            .decodeSingle<UserProfileDto>()
+                            .decodeSingleOrNull<UserProfileDto>()
+                            ?: throw Exception("Profile not found")
                     } catch (e: Exception) {
                         // If profile doesn't exist in table, create it from auth metadata
                         val user = session.user
@@ -160,7 +162,7 @@ class AuthViewModel @Inject constructor(
                         )
                         
                         // Insert the profile into the database
-                        client.postgrest["user_profiles"]
+                        client.client.postgrest["user_profiles"]
                             .insert(newProfile)
                             .decodeSingle<UserProfileDto>()
                     }
@@ -172,7 +174,7 @@ class AuthViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Failed to load user profile", e)
-                _error.value = e.message ?: "Failed to load user profile"
+                _error.value = "Failed to load user profile: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -185,14 +187,14 @@ class AuthViewModel @Inject constructor(
                 _isLoading.value = true
                 
                 // 1. Update auth metadata
-                client.auth.modifyUser {
+                client.client.auth.modifyUser {
                     data = buildJsonObject {
                         put("full_name", JsonPrimitive(name))
                     }
                 }
 
                 // 2. Get current user ID
-                val userId = client.auth.currentUserOrNull()?.id ?: throw Exception("User not authenticated")
+                val userId = client.client.auth.currentUserOrNull()?.id ?: throw Exception("User not authenticated")
 
                 // 3. Update or insert into user_profiles table
                 val userProfile = UserProfileDto(
@@ -201,7 +203,7 @@ class AuthViewModel @Inject constructor(
                     fullName = name
                 )
 
-                client.postgrest["user_profiles"]
+                client.client.postgrest["user_profiles"]
                     .upsert(userProfile) {
                         select()
                     }
@@ -225,6 +227,25 @@ class AuthViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    private suspend fun createUserProfile(userId: String, email: String, name: String): UserProfileDto {
+        return try {
+            val newProfile = UserProfileDto(
+                id = userId,
+                email = email,
+                fullName = name
+            )
+            
+            client.client.postgrest["user_profiles"]
+                .insert(newProfile) {
+                    select()  // Add this to return the inserted row
+                }
+                .decodeSingle<UserProfileDto>()
+        } catch (e: Exception) {
+            Log.e("AuthViewModel", "Failed to create user profile", e)
+            throw Exception("Failed to create user profile: ${e.message}")
+        }
     }
 }
 

@@ -13,15 +13,16 @@ import kotlinx.coroutines.launch
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import android.util.Log
-import com.example.pharmacist.data.SupabaseClient
+//import com.example.pharmacist.data.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import java.time.ZoneOffset
+import com.example.pharmacist.data.LocalSupabaseClient
 
 @HiltViewModel
 class CreateOrderViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
     private val drugRepository: DrugRepository,
-    private val client: SupabaseClient
+    private val client: LocalSupabaseClient
 ) : ViewModel() {
     private val _drugs = MutableStateFlow<List<Drug>>(emptyList())
     val drugs: StateFlow<List<Drug>> = _drugs.asStateFlow()

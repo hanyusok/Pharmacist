@@ -6,12 +6,9 @@ import com.example.pharmacist.domain.model.DrugId
 import com.example.pharmacist.domain.model.Order
 import com.example.pharmacist.domain.model.OrderItem
 import com.example.pharmacist.domain.model.OrderStatus
-import com.example.pharmacist.data.serializer.BigDecimalSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeString
-import kotlinx.serialization.serializer
-import java.math.BigDecimal
+//import java.math.BigDecimal
 
 @Serializable
 data class OrderDto(
@@ -26,9 +23,9 @@ data class OrderDto(
     @SerialName("updated_at")
     val updatedAt: String = "",
     @SerialName("total_amount")
-    val totalAmount: Double? = null,
+    val totalAmount: Double = 0.0,
     @SerialName("item_count")
-    val itemCount: Int? = null
+    val itemCount: Int = 0
 ) {
     init {
         require(status in OrderStatus.values().map { it.name }) { 
@@ -58,16 +55,16 @@ data class OrderItemDto(
     }
 }
 
-@Serializer(forClass = BigDecimal::class)
-object BigDecimalSerializer : KSerializer<BigDecimal> {
-    override fun serialize(encoder: Encoder, value: BigDecimal) {
-        encoder.encodeString(value.toPlainString())
-    }
-
-    override fun deserialize(decoder: Decoder): BigDecimal {
-        return BigDecimal(decoder.decodeString())
-    }
-}
+//@Serializer(forClass = BigDecimal::class)
+//object BigDecimalSerializer : KSerializer<BigDecimal> {
+//    override fun serialize(encoder: Encoder, value: BigDecimal) {
+//        encoder.encodeString(value.toPlainString())
+//    }
+//
+//    override fun deserialize(decoder: Decoder): BigDecimal {
+//        return BigDecimal(decoder.decodeString())
+//    }
+//}
 
 fun Order.toDto(): OrderDto {
     return OrderDto(

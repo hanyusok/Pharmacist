@@ -21,8 +21,8 @@ fun OrderDto.toOrder(items: List<OrderItemDto> = emptyList()): Order {
         createdAt = createdAt,
         updatedAt = updatedAt,
         items = items.map { it.toOrderItem() },
-        totalAmount = totalAmount ?: items.sumOf { it.price * it.quantity },
-        itemCount = itemCount ?: items.size
+        totalAmount = totalAmount,
+        itemCount = itemCount
     )
 }
 
